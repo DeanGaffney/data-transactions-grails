@@ -8,7 +8,7 @@ import grails.validation.Validateable
  * POGO to be used as a command object for the rest endpoints
  * Created by dean on 24/11/18.
  */
-class Transaction implements  Validateable {
+class Transaction implements Validateable, Comparable {
 
     String date
     String type
@@ -20,4 +20,8 @@ class Transaction implements  Validateable {
         amount(nullable: false, blank: false, validator: ValidatorFactory.getValidator(ValidatorType.NUMBER))
     }
 
+    int compareTo(Transaction comparingTransaction) {
+        //TODO sort this out
+        return this.date <=> comparingTransaction.date && this.type <=> comparingTransaction.type
+    }
 }
