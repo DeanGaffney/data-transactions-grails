@@ -1,4 +1,4 @@
-import com.tran.data.Transactions
+import com.tran.data.models.transaction.Transactions
 
 model {
     Transactions transactions

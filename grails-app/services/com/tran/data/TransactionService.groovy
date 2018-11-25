@@ -1,5 +1,11 @@
 package com.tran.data
 
+import com.tran.data.models.transaction.Transaction
+import com.tran.data.models.transaction.TransactionFilter
+import com.tran.data.models.transaction.TransactionFilterBuilder
+import com.tran.data.models.transaction.TransactionQuery
+import com.tran.data.models.transaction.TransactionResult
+import com.tran.data.models.transaction.Transactions
 import grails.gorm.transactions.Transactional
 
 import java.nio.file.Files
@@ -13,9 +19,9 @@ class TransactionService {
      * due to interaction with the single transaction file
      *
      * @param transactions the transactions to persist
-     * @return the task result object
+     * @return the transaction result object
      */
-    def synchronized persistTransactions(Transactions transactions) {
+    synchronized TransactionResult persistTransactions(Transactions transactions) {
         // TODO make this configurable with a config plugin
 
         // TODO make a task result object to return to the client
@@ -23,9 +29,11 @@ class TransactionService {
         String transactionsFileName = transactionFile.getName()
         File transactionCopyFile = new File(transactionFile.getParentFile(), "transactions-copy.csv")
 
+        TransactionResult transactionResult
+
         if(transactionFile.exists() && transactionCopyFile.createNewFile()){
             // write to the file and apply updates if needed
-            updateAndWrite(transactionFile, transactionCopyFile, transactions)
+            transactionResult = updateAndWrite(transactionFile, transactionCopyFile, transactions)
 
             // delete the original transactions file
             deleteTransactionsFile(transactionFile)
@@ -35,8 +43,9 @@ class TransactionService {
 
         }else{
             // file doesn't exist so no need to check for duplicate items, write all transactions to the file
-            performInitialWrite(transactionFile, transactions)
+            transactionResult = performInitialWrite(transactionFile, transactions)
         }
+        return transactionResult
     }
 
 
@@ -45,11 +54,13 @@ class TransactionService {
      *
      * @param transactionsFile the file to write to
      * @param transactions the transactions to write to the file
+     * @return a transaction result
      */
-    void performInitialWrite(File transactionsFile, Transactions transactions){
+    TransactionResult performInitialWrite(File transactionsFile, Transactions transactions) {
         transactionsFile.withWriterAppend { writer ->
             transactions.transactions.each { writer.println it.toCsv() }
         }
+        return new TransactionResult(created: transactions.transactions.size(), updated: 0, message: "Initial file creation")
     }
 
     /**
@@ -59,9 +70,10 @@ class TransactionService {
      * @param transactionFile the transaction file to read from
      * @param transactionsCopyFile the transaction copy file to write to
      * @param transactions the transactions to update and write to the copy file
+     * @return the transaction result
      */
-    void updateAndWrite(File transactionFile, File transactionsCopyFile, Transactions transactions){
-        // read from original transactions the file line by line
+    TransactionResult updateAndWrite(File transactionFile, File transactionsCopyFile, Transactions transactions){
+        // read from original transactions the file line by line to keep memory consumption down
         transactionFile.eachLine { String line ->
             if(!line.isEmpty()){
                 // create a transaction from the line
@@ -79,7 +91,9 @@ class TransactionService {
             }
         }
         // filter out existing transactions to get the new transactions and write them to the file
-        filterExistingTransactions(transactions).each { appendToTransactionsCopyFile(transactionsCopyFile, it) }
+        List<Transaction> transactionsToCreate = filterExistingTransactions(transactions)
+        transactionsToCreate.each { appendToTransactionsCopyFile(transactionsCopyFile, it) }
+        return new TransactionResult(created: transactionsToCreate.size(), updated: transactions.transactions.size() - transactionsToCreate.size(), message: "Transactions Stored")
     }
 
     /**
@@ -153,7 +167,7 @@ class TransactionService {
                                                                .build()
 
             // get all transactions limited to the supplied or default limit and matching the supplied filters
-            transactions.transactions = Files.lines(transactionFile.toPath())
+            transactions.transactions = Files.lines(transactionFile.toPath())   // use stream here to lazily fetch data
                                              .limit(transactionQuery.limit ?: 100)
                                              .collect(Collectors.toList())
                                              .collect {createTransactionFromLine(it)}

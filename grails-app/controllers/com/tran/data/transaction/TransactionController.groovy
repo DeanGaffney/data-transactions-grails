@@ -1,7 +1,7 @@
 package com.tran.data.transaction
 
-import com.tran.data.TransactionQuery
-import com.tran.data.Transactions
+import com.tran.data.models.transaction.TransactionQuery
+import com.tran.data.models.transaction.Transactions
 import grails.rest.*
 
 class TransactionController extends RestfulController {
@@ -34,8 +34,11 @@ class TransactionController extends RestfulController {
         if(transactions.hasErrors()){
             respond transactions.errors
         }else {
-            transactionService.persistTransactions(transactions)
-            respond transactions
+            try{
+                respond transactionService.persistTransactions(transactions)
+            }catch(Exception e){
+                response.sendError(HttpURLConnection.HTTP_INTERNAL_ERROR, e.getMessage())
+            }
         }
     }
 

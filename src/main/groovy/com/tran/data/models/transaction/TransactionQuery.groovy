@@ -1,4 +1,4 @@
-package com.tran.data
+package com.tran.data.models.transaction
 
 import grails.validation.Validateable
 

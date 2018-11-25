@@ -1,4 +1,4 @@
-package com.tran.data
+package com.tran.data.models.transaction
 
 import com.tran.data.com.tran.data.validators.ValidatorFactory
 import com.tran.data.com.tran.data.validators.ValidatorType
