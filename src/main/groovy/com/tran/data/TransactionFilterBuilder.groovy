@@ -1,4 +1,4 @@
-package com.tran.data.models.transaction
+package com.tran.data
 
 import groovy.transform.builder.Builder
 import groovy.transform.builder.ExternalStrategy

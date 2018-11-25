@@ -1,9 +1,7 @@
-package com.tran.data
+package com.tran.data.transaction
 
-
-import com.tran.data.models.transaction.Transaction
-import com.tran.data.models.transaction.TransactionQuery
-import com.tran.data.models.transaction.Transactions
+import com.tran.data.TransactionQuery
+import com.tran.data.Transactions
 import grails.rest.*
 
 class TransactionController extends RestfulController {

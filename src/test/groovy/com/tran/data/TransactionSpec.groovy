@@ -1,7 +1,5 @@
 package com.tran.data
 
-
-import com.tran.data.models.transaction.Transaction
 import org.grails.testing.GrailsUnitTest
 import spock.lang.Specification
 

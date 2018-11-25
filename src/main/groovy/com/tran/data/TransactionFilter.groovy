@@ -1,4 +1,4 @@
-package com.tran.data.models.transaction
+package com.tran.data
 
 /**
  * An object representing a filter to use

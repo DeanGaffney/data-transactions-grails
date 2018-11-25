@@ -1,11 +1,6 @@
 package com.tran.data
 
-import com.tran.data.models.transaction.Transaction
-import com.tran.data.models.transaction.TransactionFilter
-import com.tran.data.models.transaction.TransactionFilterBuilder
-import com.tran.data.models.transaction.TransactionQuery
 import grails.gorm.transactions.Transactional
-import com.tran.data.models.transaction.Transactions
 
 import java.nio.file.Files
 import java.util.stream.Collectors
@@ -151,11 +146,13 @@ class TransactionService {
         Transactions transactions = new Transactions(transactions: Collections.emptyList())
         File transactionFile = new File('/home/dean/dev/grails/data-transactions-grails/transactions.csv')
         if(transactionFile.exists()){
+            // create the transaction filter
             TransactionFilter transactionFilter = new TransactionFilterBuilder()
                                                                .dateFilter(transactionQuery.date ?: ".*")   // if it's null match everything
                                                                .typeFilter(transactionQuery.type ?: ".*")   // if it's null match everything
                                                                .build()
 
+            // get all transactions limited to the supplied or default limit and matching the supplied filters
             transactions.transactions = Files.lines(transactionFile.toPath())
                                              .limit(transactionQuery.limit ?: 100)
                                              .collect(Collectors.toList())

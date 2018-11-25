@@ -1,0 +1,11 @@
+import com.tran.data.Transaction
+
+model {
+    Transaction transaction
+}
+
+json{
+    date transaction.date
+    type transaction.type
+    amount transaction.amount
+}

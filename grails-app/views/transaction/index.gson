@@ -1,0 +1,8 @@
+import com.tran.data.Transactions
+
+model {
+    Transactions transactions
+}
+json {
+    transactions g.render(template: "transaction", collection: transactions.transactions)
+}
