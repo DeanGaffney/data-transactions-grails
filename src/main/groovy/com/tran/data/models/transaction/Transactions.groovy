@@ -5,7 +5,7 @@ import com.tran.data.com.tran.data.validators.ValidatorType
 import grails.validation.Validateable
 
 /**
- * Class  is a wrapper for a list of
+ * Class is a wrapper for a list of
  * Transaction objects
  *
  * Created by dean on 24/11/18.

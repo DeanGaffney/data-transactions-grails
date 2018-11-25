@@ -1,5 +1,6 @@
 package com.tran.data
 
+
 import com.tran.data.models.transaction.Transaction
 import com.tran.data.models.transaction.Transactions
 import grails.rest.*
@@ -7,6 +8,8 @@ import grails.rest.*
 class TransactionController extends RestfulController {
 
     static responseFormats = ['json', 'xml']
+
+    def transactionService
 
     TransactionController() {
         super(Transactions)
@@ -20,12 +23,13 @@ class TransactionController extends RestfulController {
      * Takes in a Transactions objects and stores them to the transactions file
      *
      * @param transactions the transactions to store
-     * @return json response
+     * @return a task result object
      */
     def save(Transactions transactions){
         if(transactions.hasErrors()){
             respond transactions.errors
-        }else{
+        }else {
+            transactionService.persistTransactions(transactions)
             respond transactions
         }
     }
