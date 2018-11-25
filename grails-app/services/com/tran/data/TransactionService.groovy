@@ -63,21 +63,24 @@ class TransactionService {
     void updateAndWrite(File transactionFile, File transactionsCopyFile, Transactions transactions){
         // read from original transactions the file line by line
         transactionFile.eachLine { String line ->
-            // create a transaction from the line
-            Transaction transactionFromFile = createTransactionFromLine(line)
             if(!line.isEmpty()){
+                // create a transaction from the line
+                Transaction transactionFromFile = createTransactionFromLine(line)
                 // with each line compare it against each transaction to see if there are duplicates
                 transactions.transactions.each { Transaction transaction ->
-                    //TODO need to remove transactions as they match, because the newest transactions aren't being written to the file
                     if(transaction == transactionFromFile){
                         // if the transactions are the same sum the transactions
-                        transactionFromFile.sumTransactions(transactionFromFile)
+                        transactionFromFile.sumTransactions(transaction)
+                        transaction.existed = true
                     }
                 }
+                // write the transaction out to the copy file
+                transactionsCopyFile.append(transactionFromFile.toCsv() + System.lineSeparator())
             }
-            // write the transaction out to the copy file
-            transactionsCopyFile.append(transactionFromFile.toCsv() + System.lineSeparator())
         }
+        // filter out existing transactions to get the new transactions and write them to the file
+        transactions.transactions.findAll { Transaction tran -> !tran.existed }
+                                 .each { Transaction newTran -> transactionsCopyFile.append(newTran.toCsv() + System.lineSeparator())}
     }
 
     /**

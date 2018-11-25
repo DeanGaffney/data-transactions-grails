@@ -13,11 +13,13 @@ class Transaction implements Validateable, Comparable<Transaction> {
     String date
     String type
     String amount
+    boolean existed
 
     static constraints = {
         date(nullable: false, blank: false, validator: ValidatorFactory.getValidator(ValidatorType.DATE))
         type(nullable: false, blank: false)
         amount(nullable: false, blank: false, validator: ValidatorFactory.getValidator(ValidatorType.NUMBER))
+        existed(nullable: true)
     }
 
     void sumTransactions(Transaction transaction){
