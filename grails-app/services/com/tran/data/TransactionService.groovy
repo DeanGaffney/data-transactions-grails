@@ -1,9 +1,14 @@
 package com.tran.data
 
 import com.tran.data.models.transaction.Transaction
+import com.tran.data.models.transaction.TransactionFilter
+import com.tran.data.models.transaction.TransactionFilterBuilder
+import com.tran.data.models.transaction.TransactionQuery
 import grails.gorm.transactions.Transactional
 import com.tran.data.models.transaction.Transactions
-import java.io.File
+
+import java.nio.file.Files
+import java.util.stream.Collectors
 
 @Transactional
 class TransactionService {
@@ -75,12 +80,11 @@ class TransactionService {
                     }
                 }
                 // write the transaction out to the copy file
-                transactionsCopyFile.append(transactionFromFile.toCsv() + System.lineSeparator())
+                appendToTransactionsCopyFile(transactionsCopyFile, transactionFromFile)
             }
         }
         // filter out existing transactions to get the new transactions and write them to the file
-        transactions.transactions.findAll { Transaction tran -> !tran.existed }
-                                 .each { Transaction newTran -> transactionsCopyFile.append(newTran.toCsv() + System.lineSeparator())}
+        filterExistingTransactions(transactions).each { appendToTransactionsCopyFile(transactionsCopyFile, it) }
     }
 
     /**
@@ -113,6 +117,53 @@ class TransactionService {
     Transaction createTransactionFromLine(String line){
         String[] attributes = line.split(",")
         return new Transaction(date: attributes[0], type: attributes[1], amount: attributes[2])
+    }
+
+
+    /**
+     * Gets all the transactions which did not previously exist
+     *
+     * @param transactions the transaction object to filter from
+     * @return a list of transactions which can be considered new transactions
+     */
+    List<Transaction> filterExistingTransactions(Transactions transactions){
+        return transactions.transactions.findAll{!it.existed}
+    }
+
+    /**
+     * Append a transaction to the transaction copy file
+     *
+     * @param transactionsCopyFile the transaction copy file
+     * @param transaction the transaction to append to the file
+     */
+    void appendToTransactionsCopyFile(File transactionsCopyFile, Transaction transaction){
+        transactionsCopyFile.append(transaction.toCsv() + System.lineSeparator())
+    }
+
+
+    /**
+     * Gets transactions from the file using the transaction query object
+     *
+     * @param transactionQuery the query params to use as a filter
+     * @return the transactions matching the params
+     */
+    Transactions getTransactions(TransactionQuery transactionQuery){
+        Transactions transactions = new Transactions(transactions: Collections.emptyList())
+        File transactionFile = new File('/home/dean/dev/grails/data-transactions-grails/transactions.csv')
+        if(transactionFile.exists()){
+            TransactionFilter transactionFilter = new TransactionFilterBuilder()
+                                                               .dateFilter(transactionQuery.date ?: ".*")   // if it's null match everything
+                                                               .typeFilter(transactionQuery.type ?: ".*")   // if it's null match everything
+                                                               .build()
+
+            transactions.transactions = Files.lines(transactionFile.toPath())
+                                             .limit(transactionQuery.limit ?: 100)
+                                             .collect(Collectors.toList())
+                                             .collect {createTransactionFromLine(it)}
+                                             .findAll{ it.date ==~ /${transactionFilter.dateFilter}/ }
+                                             .findAll{ it.type ==~ /${transactionFilter.typeFilter}/}
+        }
+        return transactions
     }
 
 }

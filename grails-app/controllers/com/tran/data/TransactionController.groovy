@@ -2,12 +2,13 @@ package com.tran.data
 
 
 import com.tran.data.models.transaction.Transaction
+import com.tran.data.models.transaction.TransactionQuery
 import com.tran.data.models.transaction.Transactions
 import grails.rest.*
 
 class TransactionController extends RestfulController {
 
-    static responseFormats = ['json', 'xml']
+    static responseFormats = ['json']
 
     def transactionService
 
@@ -15,8 +16,14 @@ class TransactionController extends RestfulController {
         super(Transactions)
     }
 
-    def index(){
-        respond new Transaction(date: new Date().toString(), type: "some type", amount: "123.45")
+    /**
+     * Uses a transaction query object to filter the data returned
+     *
+     * @param transactionQuery the transaction query object to use for building filters
+     * @return transactions matching the transactionQuery params
+     */
+    def index(TransactionQuery transactionQuery) {
+        respond transactionService.getTransactions(transactionQuery)
     }
 
     /**
