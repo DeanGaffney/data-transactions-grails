@@ -4,5 +4,5 @@ model {
     Transactions transactions
 }
 json {
-    transactions g.render(template: "transaction", collection: transactions.transactions)
+    entries g.render(template: "transaction", collection: transactions.entries)
 }

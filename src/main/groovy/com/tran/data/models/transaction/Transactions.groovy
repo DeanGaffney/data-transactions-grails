@@ -12,9 +12,9 @@ import grails.validation.Validateable
  */
 class Transactions implements  Validateable {
 
-    List<Transaction> transactions
+    List<Transaction> entries
 
     static constraints ={
-        transactions(nullable: false, validator: ValidatorFactory.getValidator(ValidatorType.LIST))
+        entries(nullable: false, validator: ValidatorFactory.getValidator(ValidatorType.LIST))
     }
 }
