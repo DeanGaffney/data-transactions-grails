@@ -1,6 +1,7 @@
 package com.tran.data.models
 
 import com.tran.data.models.transaction.Transaction
+import com.tran.data.models.transaction.TransactionQuery
 import org.grails.testing.GrailsUnitTest
 import spock.lang.Specification
 
@@ -77,5 +78,36 @@ class TransactionSpec extends Specification implements GrailsUnitTest {
 
         and: "the transaction amount is formatted to 2 decimal places"
         transaction.amount ==~ /^\d+\.\d{2}$/
+    }
+
+    void "test valid transaction"(){
+        expect:
+        transaction.validate()
+    }
+
+    void "test invalid transaction"(){
+        setup:
+        Transaction invalidTransaction = new Transaction(date: "11/12/2018", type: "credit", amount: "120.00")
+        when: "I validate a transaction with the wrong date format"
+        boolean isValid = invalidTransaction.validate()
+        then: "it is not valid"
+        !isValid
+        when: "I validate a transaction with an amount that can't be parsed to a number"
+        invalidTransaction.date = transaction.date
+        invalidTransaction.amount = "not a number"
+        then: "it is invalid"
+        !invalidTransaction.validate()
+        when: "I make the attributes empty"
+        invalidTransaction.amount = ""
+        invalidTransaction.date = ""
+        invalidTransaction.type = ""
+        then: "it is invalid"
+        !invalidTransaction.validate()
+        when: "i set all values to null"
+        invalidTransaction.amount = null
+        invalidTransaction.date = null
+        invalidTransaction.type = null
+        then:
+        !invalidTransaction.validate()
     }
 }
