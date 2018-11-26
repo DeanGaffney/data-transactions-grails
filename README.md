@@ -86,3 +86,6 @@ http://localhost:9000/transaction
 
 ## Tests
 All tests passing
+
+# Authors
+Dean Gaffney
