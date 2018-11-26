@@ -36,7 +36,6 @@ class TransactionService {
 
         // delete the original transactions file and rename the copy to be the original file name
         if(!deleteTransactionsFile(transactionFile)){
-            println "yes"
             transactionResult.message = "Error occurred deleting"
         }
 
@@ -82,6 +81,16 @@ class TransactionService {
     }
 
     /**
+     * Gets a csv file from the users temp directory
+     * with the supplied name
+     *
+     * @param name the name of the file to look for
+     * @return the file
+     */
+    File getTempDirFile(String name){
+        return new File(System.getProperty("java.io.tmpdir"), "${name}.csv")
+    }
+    /**
      * Creates a temp csv file which will be deleted
      * when the JVM is terminated. Should be used
      * for creating the transaction files
@@ -90,7 +99,7 @@ class TransactionService {
      * @return the temp file
      */
     File createTempCsvFile(String name){
-        File tempCsv = new File(System.getProperty("java.io.tmpdir"), "${name}.csv")
+        File tempCsv = getTempDirFile(name)
         tempCsv.createNewFile()
         tempCsv.setReadable(true)
         tempCsv.setWritable(true)
@@ -107,7 +116,7 @@ class TransactionService {
      * @return the temp csv file
      */
     File getTempCsvFile(String name){
-        File file = new File(System.getProperty("java.io.tmpdir"), "${name}.csv")
+        File file = getTempDirFile(name)
         if(!file.exists()){
             file = createTempCsvFile(name)
         }

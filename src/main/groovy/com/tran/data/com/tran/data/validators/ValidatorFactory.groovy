@@ -9,10 +9,10 @@ package com.tran.data.com.tran.data.validators
 class ValidatorFactory {
 
     /**
-     * Gets a validator for the supplied validator type
+     * Gets a validator closure for the supplied validator type
      *
      * @param type the type of validator to get
-     * @return the validator
+     * @return the validator closure
      */
     static Closure<Boolean> getValidator(ValidatorType type){
         // in the event a type is not matched return false and make the validation fail
