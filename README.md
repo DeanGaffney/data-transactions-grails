@@ -82,3 +82,6 @@ http://localhost:9000/transaction?type=credit&date=11-12-2018&limit=1
 ### Get All Transactions
 You can get back all transactions by leaving out the query params from the request. Please note the max entries returned is 100 entries unless you specify a limit in the query params. The request would like like the following:
 http://localhost:9000/transaction
+
+## Tests
+All tests passing
