@@ -9,6 +9,8 @@ import com.tran.data.models.transaction.Transactions
 import grails.gorm.transactions.Transactional
 
 import java.nio.file.Files
+import java.nio.file.Path
+import java.nio.file.Paths
 import java.util.stream.Collectors
 
 @Transactional
@@ -22,25 +24,25 @@ class TransactionService {
      * @return the transaction result object
      */
     synchronized TransactionResult persistTransactions(Transactions transactions) {
-        // TODO make this configurable with a config plugin
+        File transactionFile = getTransactionsFile()
 
-        // TODO make a task result object to return to the client
-        File transactionFile = new File('/home/dean/dev/grails/data-transactions-grails/transactions.csv')
         String transactionsFileName = transactionFile.getName()
-        File transactionCopyFile = new File(transactionFile.getParentFile(), "transactions-copy.csv")
+        File transactionCopyFile = getTransactionsCopyFile()
 
         TransactionResult transactionResult
 
-        if(transactionFile.exists() && transactionCopyFile.createNewFile()){
+        if(transactionFile.exists()){
             // write to the file and apply updates if needed
             transactionResult = updateAndWrite(transactionFile, transactionCopyFile, transactions)
 
-            // delete the original transactions file
-            deleteTransactionsFile(transactionFile)
+            // delete the original transactions file and rename the copy to be the original file name
+            if(!deleteTransactionsFile(transactionFile)){
+                transactionResult.message = "Error occurred deleting"
+            }
 
-            // rename the transactions-copy.csv file to be the original transactions file name
-            renameFile(transactionCopyFile, transactionsFileName)
-
+            if(!renameFile(transactionCopyFile, transactionsFileName)){
+                transactionResult.message = "Error occurred renaming"
+            }
         }else{
             // file doesn't exist so no need to check for duplicate items, write all transactions to the file
             transactionResult = performInitialWrite(transactionFile, transactions)
@@ -73,6 +75,7 @@ class TransactionService {
      * @return the transaction result
      */
     TransactionResult updateAndWrite(File transactionFile, File transactionsCopyFile, Transactions transactions){
+        BufferedWriter writer = new BufferedWriter(new FileWriter(transactionsCopyFile))
         // read from original transactions the file line by line to keep memory consumption down
         transactionFile.eachLine { String line ->
             if(!line.isEmpty()){
@@ -87,13 +90,51 @@ class TransactionService {
                     }
                 }
                 // write the transaction out to the copy file
-                appendToTransactionsCopyFile(transactionsCopyFile, transactionFromFile)
+                appendToTransactionsCopyFile(writer, transactionFromFile)
             }
         }
         // filter out existing transactions to get the new transactions and write them to the file
         List<Transaction> transactionsToCreate = filterExistingTransactions(transactions)
-        transactionsToCreate.each { appendToTransactionsCopyFile(transactionsCopyFile, it) }
+        transactionsToCreate.each { appendToTransactionsCopyFile(writer, it) }
+        writer.close()
         return new TransactionResult(created: transactionsToCreate.size(), updated: transactions.transactions.size() - transactionsToCreate.size(), message: "Transactions Stored")
+    }
+
+    /**
+     * Creates a temp csv file which will be deleted
+     * when the JVM is terminated. Should be used
+     * for creating the transaction files
+     *
+     * @param name the name to use for the file
+     * @return the temp file
+     */
+    File createTempCsvFile(String name){
+        return new File(System.getProperty("java.io.tmpdir"), "${name}.csv")
+    }
+
+    /**
+     * Gets a temp csv file by checking to see if the file
+     * already exists in the temp directory. If it does the file
+     * is returned, otherwise the file is created as a temp file
+     * marked for deletion and returned
+     *
+     * @param name the name of the file to check for
+     * @return the temp csv file
+     */
+    File getTempCsvFile(String name){
+        File file = new File(System.getProperty("java.io.tmpdir"), "${name}.csv")
+        if(!file.exists()){
+            file = createTempCsvFile(name)
+        }
+        return file
+    }
+
+    File getTransactionsFile(){
+        getTempCsvFile("transactions")
+    }
+
+    File getTransactionsCopyFile(){
+        getTempCsvFile("transactions-copy")
     }
 
     /**
@@ -114,7 +155,8 @@ class TransactionService {
      * @return true if the file was renamed, false otherwise
      */
     boolean renameFile(File transactionFile, String newName){
-        return transactionFile.renameTo(newName)
+        Path copyPath = Files.move(transactionFile.toPath(), transactionFile.toPath().resolveSibling(newName))
+        return copyPath.toFile().exists()
     }
 
     /**
@@ -149,6 +191,15 @@ class TransactionService {
         transactionsCopyFile.append(transaction.toCsv() + System.lineSeparator())
     }
 
+    /**
+     * Append a transaction to the transaction copy file
+     *
+     * @param transactionsCopyFile the transaction copy file
+     * @param transaction the transaction to append to the file
+     */
+    void appendToTransactionsCopyFile(BufferedWriter writer, Transaction transaction){
+        writer.writeLine(transaction.toCsv())
+    }
 
     /**
      * Gets transactions from the file using the transaction query object
@@ -158,7 +209,7 @@ class TransactionService {
      */
     Transactions getTransactions(TransactionQuery transactionQuery){
         Transactions transactions = new Transactions(transactions: Collections.emptyList())
-        File transactionFile = new File('/home/dean/dev/grails/data-transactions-grails/transactions.csv')
+        File transactionFile = getTransactionsFile()
         if(transactionFile.exists()){
             // create the transaction filter
             TransactionFilter transactionFilter = new TransactionFilterBuilder()
