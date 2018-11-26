@@ -88,7 +88,9 @@ class TransactionService {
      * @return the temp file
      */
     File createTempCsvFile(String name){
-        return new File(System.getProperty("java.io.tmpdir"), "${name}.csv")
+        File tempCsv = new File(System.getProperty("java.io.tmpdir"), "${name}.csv")
+        tempCsv.createNewFile()
+        return tempCsv
     }
 
     /**
@@ -108,10 +110,24 @@ class TransactionService {
         return file
     }
 
+    /**
+     * Gets the transaction file which is created
+     * or retrieved depending on if it already exists
+     *
+     * @see #createTempCsvFile(java.lang.String)
+     * @return the transaction file
+     */
     File getTransactionsFile(){
         getTempCsvFile("transactions")
     }
 
+    /**
+     * Gets the transaction copy file which is created
+     * or retrieved depending on if it already exists
+     *
+     * @see #createTempCsvFile(java.lang.String)
+     * @return the transaction copy file
+     */
     File getTransactionsCopyFile(){
         getTempCsvFile("transactions-copy")
     }
