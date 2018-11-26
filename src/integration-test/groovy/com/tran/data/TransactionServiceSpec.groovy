@@ -52,10 +52,15 @@ class TransactionServiceSpec extends Specification {
     void "test renaming transaction file"(){
         when: "I get a transaction file"
         File file = transactionService.getTransactionsFile()
+        String originalName = file.getName()
+        File copyFile = transactionService.getTransactionsCopyFile()
         then: "it exists"
         file.exists()
+        copyFile.exists()
+        and: "i delete the original"
+        transactionService.deleteTransactionsFile(file)
         and: "when i rename it"
-        boolean renamed = transactionService.renameFile(file, "transactions-copy")
+        boolean renamed = transactionService.renameFile(copyFile, originalName)
         then: "it was renamed"
         renamed
     }
