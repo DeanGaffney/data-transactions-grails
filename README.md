@@ -1,6 +1,11 @@
 # data-transactions-grails
 Simple REST service for transaction data built with Grails 3
 
+## Prerequisites
+* Grails 3.3.x
+* Groovy 2.4.11
+* Java 8 (v 1.8.0_161)
+
 ## POST endpoint
 You can send transactions to the web service by supplying the data in this format:
 ```json

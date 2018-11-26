@@ -1,4 +1,4 @@
-package com.tran.data
+package com.tran.data.models
 
 import com.tran.data.models.transaction.Transaction
 import org.grails.testing.GrailsUnitTest

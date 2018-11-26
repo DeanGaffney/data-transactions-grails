@@ -37,6 +37,8 @@ class TransactionController extends RestfulController {
             try{
                 respond transactionService.persistTransactions(transactions)
             }catch(Exception e){
+                e.printStackTrace()
+                transactionService.deleteTransactionsFile(transactionService.getTransactionsCopyFile())
                 response.sendError(HttpURLConnection.HTTP_INTERNAL_ERROR, e.getMessage())
             }
         }

@@ -11,6 +11,7 @@ import grails.gorm.transactions.Transactional
 import java.nio.file.Files
 import java.nio.file.Path
 import java.util.stream.Collectors
+import java.util.stream.Stream
 
 @Transactional
 class TransactionService {
@@ -35,6 +36,7 @@ class TransactionService {
 
         // delete the original transactions file and rename the copy to be the original file name
         if(!deleteTransactionsFile(transactionFile)){
+            println "yes"
             transactionResult.message = "Error occurred deleting"
         }
 
@@ -90,6 +92,8 @@ class TransactionService {
     File createTempCsvFile(String name){
         File tempCsv = new File(System.getProperty("java.io.tmpdir"), "${name}.csv")
         tempCsv.createNewFile()
+        tempCsv.setReadable(true)
+        tempCsv.setWritable(true)
         return tempCsv
     }
 
@@ -192,7 +196,7 @@ class TransactionService {
      * @param transactionQuery the query params to use as a filter
      * @return the transactions matching the params
      */
-    Transactions getTransactions(TransactionQuery transactionQuery){
+    synchronized Transactions getTransactions(TransactionQuery transactionQuery){
         Transactions transactions = new Transactions(entries: Collections.emptyList())
         File transactionFile = getTransactionsFile()
         // create the transaction filter
@@ -216,11 +220,17 @@ class TransactionService {
      * @return a list of filtered transactions form the transaction file
      */
     List<Transaction> filterTransactions(File transactionFile, TransactionFilter transactionFilter){
-        return Files.lines(transactionFile.toPath())   // use stream here to lazily fetch data
-                    .limit(transactionFilter.limit)
-                    .collect(Collectors.toList())
-                    .collect {createTransactionFromLine(it)}
-                    .findAll{ it.date ==~ /${transactionFilter.dateFilter}/ }
+        Stream<String> streamLines = Files.lines(transactionFile.toPath())   // use stream here to lazily fetch data
+                                          .limit(transactionFilter.limit)
+        List<String> lines = streamLines.collect(Collectors.toList())
+        try{
+            streamLines.close()
+        }catch(Exception e){
+            e.printStackTrace()
+        }
+
+        return lines.collect {createTransactionFromLine(it)} // convert to transaction objects
+                    .findAll{ it.date ==~ /${transactionFilter.dateFilter}/ }   // filter items
                     .findAll{ it.type ==~ /${transactionFilter.typeFilter}/}
     }
 
