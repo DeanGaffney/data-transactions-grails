@@ -30,7 +30,7 @@ You can send transactions to the web service by supplying the data in this forma
 * When checking for duplicate entries a copy of the transactions file is made and as duplicates and new transactions are found they are written to this file copy file.
 * Once all transactions are dealt with the old transactions file is deleted and the copy is renamed to the original file name.
 * To keep memory consumption low all IO is done line by line.
-* Any writes to files are synchronized to stop several threads writing to the same transaction file and corrupting the data.
+* Any file IO is synchronized to stop several threads writing or reading the same transaction file and corrupting the data.
 * Once the data is inserted a response is returned to the client in the following format
   ```json
   {
