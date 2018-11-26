@@ -7,5 +7,7 @@ package com.tran.data.models.transaction
  * Created by dean on 25/11/18.
  */
 class TransactionFilter {
-    String dateFilter, typeFilter
+    String dateFilter
+    String typeFilter
+    int limit
 }
