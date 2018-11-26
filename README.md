@@ -43,7 +43,8 @@ You can send transactions to the web service by supplying the data in this forma
 Validators were created for the data so please ensure that your entries in the transaction date follow the following rules:
 * Date must be in the format "dd-MM-yyyy"
 * Amount must be a valid number
-  If your entries do not follow this schema the POST request will be rejected.
+
+If your entries do not follow this schema the POST request will be rejected.
 
 ## GET Endpoint
 You can perform filtered searches on the GET endpoint for transactions. Below are some examples of different queries against the endpoint. The data comes back in the following format:
