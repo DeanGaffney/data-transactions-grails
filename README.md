@@ -27,7 +27,7 @@ You can send transactions to the web service by supplying the data in this forma
 * Post the data to the following endpoint http://localhost/transaction
 * Each entry in the json array will written to a transactions.csv file which is stored in the users temp directory.
 * Before being written to a file each entry is compared against each line in the existing transactions file. If a line has the same date and type as an incoming entry they are considered equal and their amount values are summed together and the updated transaction is written to the file.
-* When checking for duplicate entries a copy of the transactions file is made and as duplicates and new transactions are found they are written to this file copy file.
+* When checking for duplicate entries a copy of the transactions file is made and as duplicates and new transactions are found they are written to this copy file.
 * Once all transactions are dealt with the old transactions file is deleted and the copy is renamed to the original file name.
 * To keep memory consumption low all IO is done line by line.
 * Any file IO is synchronized to stop several threads writing or reading the same transaction file and corrupting the data.
@@ -40,7 +40,7 @@ You can send transactions to the web service by supplying the data in this forma
   }
   ```
 ### Data Validation
-Validators were created for the data so please ensure that your entries in the transaction date follow the following rules:
+Validators were created for the data so please ensure that your entries in the transaction data follow the following rules:
 * Date must be in the format "dd-MM-yyyy"
 * Amount must be a valid number
 
