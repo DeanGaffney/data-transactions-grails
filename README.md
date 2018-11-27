@@ -34,11 +34,12 @@ You can send transactions to the web service by supplying the data in this forma
 * Once the data is inserted a response is returned to the client in the following format
   ```json
   {
-      "created": 10,    // the number of new transactions
-      "updated": 3,     // the number of updated transactions
+      "created": 10,
+      "updated": 3,
       "message": "Some message"
   }
   ```
+  The *"created"* key refers to the number of new transactions that have been written to the transactions.csv file. The *"updated"* key refers to transactions that were considered to be duplicates and were updated and written back into the transactions.csv file.
 ### Data Validation
 Validators were created for the data so please ensure that your entries in the transaction data follow the following rules:
 * Date must be in the format "dd-MM-yyyy"
