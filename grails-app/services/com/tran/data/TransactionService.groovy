@@ -212,7 +212,7 @@ class TransactionService {
         TransactionFilter transactionFilter = new TransactionFilterBuilder()
                                                            .dateFilter(transactionQuery.date ?: ".*")   // if it's null match everything
                                                            .typeFilter(transactionQuery.type ?: ".*")   // if it's null match everything
-                                                           .limit(transactionQuery.limit ?: 100)        // if no limit is supplied set default to 100
+                                                           .limit(transactionQuery.limit ?: TransactionFilter.DEFAULT_MAX_LIMIT)        // if no limit is supplied set default to 100
                                                            .build()
 
         // get all transactions limited to the supplied or default limit and matching the supplied filters
@@ -231,16 +231,19 @@ class TransactionService {
     List<Transaction> filterTransactions(File transactionFile, TransactionFilter transactionFilter){
         Stream<String> streamLines = Files.lines(transactionFile.toPath())   // use stream here to lazily fetch data
                                           .limit(transactionFilter.limit)
-        List<String> lines = streamLines.collect(Collectors.toList())
+                                          .map{String line -> createTransactionFromLine(line)}
+                                          .peek{Transaction tran -> println tran.toCsv()}
+                                          .filter{tran -> tran.date ==~ /${transactionFilter.dateFilter}/}
+                                          .filter{tran -> tran.type ==~ /${transactionFilter.typeFilter}/}
+
+        List<Transaction> entries = streamLines.collect(Collectors.toList())
         try{
             streamLines.close()
         }catch(Exception e){
-            e.printStackTrace()
+            // exception occurred so return an empty list to the client
+            entries = Collections.emptyList()
         }
-
-        return lines.collect {createTransactionFromLine(it)} // convert to transaction objects
-                    .findAll{ it.date ==~ /${transactionFilter.dateFilter}/ }   // filter items
-                    .findAll{ it.type ==~ /${transactionFilter.typeFilter}/}
+        return entries
     }
 
 }
