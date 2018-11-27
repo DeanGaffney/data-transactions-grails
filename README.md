@@ -85,6 +85,11 @@ http://localhost:9000/transaction?type=credit&date=11-12-2018&limit=1
 You can get back all transactions by leaving out the query params from the request. Please note the max entries returned is 100 entries unless you specify a limit in the query params. The request would like like the following:
 http://localhost:9000/transaction
 
+### Java 8 & Groovy
+The get all transactions functions put emphasis on a mixture of java 8 streams and groovy collection methods to perform the filtering on the transactions file. The filtering code can be found below
+![Filtering Code](./images/code.png)
+
+
 ## Tests
 All tests passing
 
