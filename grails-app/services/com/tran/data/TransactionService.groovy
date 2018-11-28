@@ -229,7 +229,7 @@ class TransactionService {
      * @return a list of filtered transactions form the transaction file
      */
     List<Transaction> filterTransactions(File transactionFile, TransactionFilter transactionFilter){
-        Stream<String> streamLines = Files.lines(transactionFile.toPath())   // use stream here to lazily fetch data
+        Stream<Transaction> streamLines = Files.lines(transactionFile.toPath())   // use stream here to lazily fetch data
                                           .limit(transactionFilter.limit)   // limit the number of lines processed
                                           .map{String line -> createTransactionFromLine(line)}  //map to transaction object
                                           .filter{tran -> tran.date ==~ /${transactionFilter.dateFilter}/} // see if date matches filter regex
