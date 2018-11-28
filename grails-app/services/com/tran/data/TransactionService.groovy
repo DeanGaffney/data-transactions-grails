@@ -2,7 +2,7 @@ package com.tran.data
 
 import com.tran.data.models.transaction.Transaction
 import com.tran.data.models.transaction.TransactionFilter
-import com.tran.data.models.transaction.TransactionFilterBuilder
+
 import com.tran.data.models.transaction.TransactionQuery
 import com.tran.data.models.transaction.TransactionResult
 import com.tran.data.models.transaction.Transactions
@@ -208,15 +208,9 @@ class TransactionService {
     synchronized Transactions getTransactions(TransactionQuery transactionQuery){
         Transactions transactions = new Transactions(entries: Collections.emptyList())
         File transactionFile = getTransactionsFile()
-        // create the transaction filter
-        TransactionFilter transactionFilter = new TransactionFilterBuilder()
-                                                           .dateFilter(transactionQuery.date ?: ".*")   // if it's null match everything
-                                                           .typeFilter(transactionQuery.type ?: ".*")   // if it's null match everything
-                                                           .limit(transactionQuery.limit ?: TransactionFilter.DEFAULT_MAX_LIMIT)        // if no limit is supplied set default to 100
-                                                           .build()
 
         // get all transactions limited to the supplied or default limit and matching the supplied filters
-        transactions.entries = filterTransactions(transactionFile, transactionFilter)
+        transactions.entries = filterTransactions(transactionFile, transactionQuery)
         return transactions
     }
 
@@ -228,9 +222,12 @@ class TransactionService {
      * @param transactionFilter the transaction filter to filter transactions
      * @return a list of filtered transactions form the transaction file
      */
-    List<Transaction> filterTransactions(File transactionFile, TransactionFilter transactionFilter){
+    List<Transaction> filterTransactions(File transactionFile, TransactionQuery query){
+        // create the transaction filter
+        TransactionFilter transactionFilter = new TransactionFilter(dateFilter: query.date, typeFilter: query.type)
+
         Stream<Transaction> streamLines = Files.lines(transactionFile.toPath())   // use stream here to lazily fetch data
-                                          .limit(transactionFilter.limit)   // limit the number of lines processed
+                                          .limit(query.limit)   // limit the number of lines processed
                                           .map{String line -> createTransactionFromLine(line)}  //map to transaction object
                                           .filter{tran -> tran.date ==~ /${transactionFilter.dateFilter}/} // see if date matches filter regex
                                           .filter{tran -> tran.type ==~ /${transactionFilter.typeFilter}/} // see if type matches filter regex

@@ -8,9 +8,15 @@ import grails.validation.Validateable
  */
 class TransactionQuery implements Validateable {
 
-    String date     // filter by transactions with a given date
-    String type     // filter by transactions with a specific type
-    int limit       // the number of transactions to return in the response
+    // constant for setting a default max limit on entries returned
+    public static final int DEFAULT_MAX_LIMIT = 100
+
+    // constant for matching everything with a regex
+    public static final String DEFAULT_MATCH_ALL = ".*"
+
+    String date = DEFAULT_MATCH_ALL     // filter by transactions with a given date
+    String type = DEFAULT_MATCH_ALL     // filter by transactions with a specific type
+    int limit = DEFAULT_MAX_LIMIT       // the number of transactions to return in the response
 
     static constraints = {
         date(nullable: true)
