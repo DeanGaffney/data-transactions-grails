@@ -1,8 +1,6 @@
 package com.tran.data
 
 import com.tran.data.models.transaction.Transaction
-import com.tran.data.models.transaction.TransactionFilterBuilder
-import com.tran.data.models.transaction.TransactionFilter
 import com.tran.data.models.transaction.TransactionQuery
 import com.tran.data.models.transaction.TransactionResult
 import com.tran.data.models.transaction.Transactions

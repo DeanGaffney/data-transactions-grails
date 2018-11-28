@@ -1,6 +1,5 @@
 package com.tran.data.validators
 
-import com.tran.data.com.tran.data.validators.ListValidator
 import com.tran.data.models.transaction.Transaction
 import com.tran.data.models.transaction.Transactions
 import org.grails.testing.GrailsUnitTest

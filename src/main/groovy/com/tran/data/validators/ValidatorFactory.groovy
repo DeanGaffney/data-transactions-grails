@@ -1,18 +1,18 @@
-package com.tran.data.com.tran.data.validators
+package com.tran.data.validators
 
 /**
- * A validator factory which deals with
- * returning the correct validator for the validator type
+ * A validators factory which deals with
+ * returning the correct validators for the validators type
  *
  * Created by dean on 24/11/18.
  */
 class ValidatorFactory {
 
     /**
-     * Gets a validator closure for the supplied validator type
+     * Gets a validators closure for the supplied validators type
      *
-     * @param type the type of validator to get
-     * @return the validator closure
+     * @param type the type of validators to get
+     * @return the validators closure
      */
     static Closure<Boolean> getValidator(ValidatorType type){
         // in the event a type is not matched return false and make the validation fail

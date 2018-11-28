@@ -1,6 +1,5 @@
 package com.tran.data.validators
 
-import com.tran.data.com.tran.data.validators.NumberValidator
 import org.grails.testing.GrailsUnitTest
 import spock.lang.Specification
 

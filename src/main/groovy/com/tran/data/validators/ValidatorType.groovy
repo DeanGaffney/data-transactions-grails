@@ -1,7 +1,7 @@
-package com.tran.data.com.tran.data.validators
+package com.tran.data.validators
 
 /**
- * An enum representing the validator data types
+ * An enum representing the validators data types
  * which will be used for the ValidatorFactory
  *
  * Created by dean on 24/11/18.

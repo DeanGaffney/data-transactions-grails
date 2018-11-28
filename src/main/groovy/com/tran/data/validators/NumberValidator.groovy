@@ -1,15 +1,15 @@
-package com.tran.data.com.tran.data.validators
+package com.tran.data.validators
 
 /**
- * A number validator for POGOs
+ * A number validators for POGOs
  * Created by dean on 24/11/18.
  */
 class NumberValidator implements Validator{
 
     /**
-     * Gets the number validator
-     * this validator returns true if a given string is a number
-     * @return the validator
+     * Gets the number validators
+     * this validators returns true if a given string is a number
+     * @return the validators
      */
     @Override
     Closure<Boolean> getValidator() {
