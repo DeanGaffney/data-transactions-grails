@@ -10,20 +10,25 @@ import grails.gorm.transactions.Transactional
 
 import java.nio.file.Files
 import java.nio.file.Path
+import java.util.concurrent.locks.ReadWriteLock
+import java.util.concurrent.locks.ReentrantReadWriteLock
 import java.util.stream.Collectors
 import java.util.stream.Stream
 
 @Transactional
 class TransactionService {
 
+    ReadWriteLock rwLock = new ReentrantReadWriteLock()
+
     /**
      * Persists transactions to a file, this function is thread safe
-     * due to interaction with the single transaction file
+     * due to interaction with the single transaction file. This function
+     * uses a write lock to only allow one writer to write to the file at a time
      *
      * @param transactions the transactions to persist
      * @return the transaction result object
      */
-    synchronized TransactionResult persistTransactions(Transactions transactions) {
+    TransactionResult persistTransactions(Transactions transactions) {
         File transactionFile = getTransactionsFile()
 
         String transactionsFileName = transactionFile.getName()
@@ -31,9 +36,15 @@ class TransactionService {
 
         TransactionResult transactionResult
 
-        // write to the file and apply updates if needed
-        transactionResult = updateAndWrite(transactionFile, transactionCopyFile, transactions)
-
+        // lock the file to a single writer
+        rwLock.writeLock().lock()
+        try{
+            // write to the file and apply updates if needed
+            transactionResult = updateAndWrite(transactionFile, transactionCopyFile, transactions)
+        }finally{
+            // release the write lock
+            rwLock.writeLock().unlock()
+        }
         // delete the original transactions file and rename the copy to be the original file name
         if(!deleteTransactionsFile(transactionFile)){
             transactionResult.message = "Error occurred deleting"
@@ -56,28 +67,46 @@ class TransactionService {
      */
     TransactionResult updateAndWrite(File transactionFile, File transactionsCopyFile, Transactions transactions){
         BufferedWriter writer = new BufferedWriter(new FileWriter(transactionsCopyFile))
-        // read from original transactions the file line by line to keep memory consumption down
-        transactionFile.eachLine { String line ->
-            if(!line.isEmpty()){
-                // create a transaction from the line
-                Transaction transactionFromFile = createTransactionFromLine(line)
-                // with each line compare it against each transaction to see if there are duplicates
-                transactions.entries.each { Transaction transaction ->
-                    if(transaction == transactionFromFile){
-                        // if the transactions are the same sum the transactions
-                        transactionFromFile.sumTransactions(transaction)
-                        transaction.existed = true
-                    }
+        TransactionResult transactionResult = new TransactionResult(created: 0, updated: 0, message: "No operations occurred")
+        try{
+            // read from original transactions the file line by line to keep memory consumption down
+            transactionFile.eachLine { String line ->
+                if(!line.isEmpty()){
+                    // create a transaction from the line
+                    Transaction transactionFromFile = createTransactionFromLine(line)
+                    // update any matching transactions
+                    updateMatchingTransactions(transactions, transactionFromFile)
+                    // write the transaction out to the copy file
+                    appendToTransactionsCopyFile(writer, transactionFromFile)
                 }
-                // write the transaction out to the copy file
-                appendToTransactionsCopyFile(writer, transactionFromFile)
+            }
+            // filter out existing transactions to get the new transactions and write them to the file
+            List<Transaction> transactionsToCreate = filterExistingTransactions(transactions)
+            transactionsToCreate.each { appendToTransactionsCopyFile(writer, it) }
+            transactionResult = new TransactionResult(created: transactionsToCreate.size(), updated: transactions.entries.size() - transactionsToCreate.size(), message: "Transactions Stored")
+        }finally{
+            writer.close()
+        }
+        return transactionResult
+    }
+
+    /**
+     * Update matching transactions that match the given transaction
+     * by summing their amounts together and marking the client transaction
+     * as having existed previously in the transaction file
+     *
+     * @param transactionsFromClient the transactions from the client
+     * @param transactionToMatch the transaction to compare against the client transactions
+     */
+    void updateMatchingTransactions(Transactions transactionsFromClient, Transaction transactionToMatch){
+        // with each line compare it against each transaction to see if there are duplicates
+        transactionsFromClient.entries.each { Transaction transaction ->
+            if(transaction == transactionToMatch){
+                // if the transactions are the same sum the transactions
+                transactionToMatch.sumTransactions(transaction)
+                transaction.existed = true
             }
         }
-        // filter out existing transactions to get the new transactions and write them to the file
-        List<Transaction> transactionsToCreate = filterExistingTransactions(transactions)
-        transactionsToCreate.each { appendToTransactionsCopyFile(writer, it) }
-        writer.close()
-        return new TransactionResult(created: transactionsToCreate.size(), updated: transactions.entries.size() - transactionsToCreate.size(), message: "Transactions Stored")
     }
 
     /**
@@ -205,7 +234,7 @@ class TransactionService {
      * @param transactionQuery the query params to use as a filter
      * @return the transactions matching the params
      */
-    synchronized Transactions getTransactions(TransactionQuery transactionQuery){
+    Transactions getTransactions(TransactionQuery transactionQuery){
         Transactions transactions = new Transactions(entries: Collections.emptyList())
         File transactionFile = getTransactionsFile()
 
@@ -217,12 +246,14 @@ class TransactionService {
     /**
      * Filters transactions within the supplied transaction file using the
      * supplied transaction filter object and returns the transactions as a list
+     * this function uses read locks to allow concurrent readers to read the file
      *
      * @param transactionFile the transaction file to read from
      * @param transactionFilter the transaction filter to filter transactions
      * @return a list of filtered transactions form the transaction file
      */
     List<Transaction> filterTransactions(File transactionFile, TransactionQuery query){
+        List<Transaction> entries = Collections.emptyList()
         // create the transaction filter
         TransactionFilter transactionFilter = new TransactionFilter(dateFilter: query.date, typeFilter: query.type)
 
@@ -231,14 +262,16 @@ class TransactionService {
                                           .map{String line -> createTransactionFromLine(line)}  //map to transaction object
                                           .filter{tran -> tran.date ==~ /${transactionFilter.dateFilter}/} // see if date matches filter regex
                                           .filter{tran -> tran.type ==~ /${transactionFilter.typeFilter}/} // see if type matches filter regex
-
-        List<Transaction> entries = streamLines.collect(Collectors.toList())
+        // lock the file to allow concurrent readers
+        rwLock.readLock().lock()
         try{
+            // read access to the file occurs here on the stream as collect is a terminal operation
+            entries = streamLines.collect(Collectors.toList())
             // close off the stream to free up the file
             streamLines.close()
-        }catch(Exception e){
-            // exception occurred so return an empty list to the client
-            entries = Collections.emptyList()
+        }finally{
+            // release the read lock
+            rwLock.readLock().unlock()
         }
         return entries
     }
